@@ -20,6 +20,7 @@ function Field({ name, control, register, watch, setValue }) {
         return (
           <Card key={field.id || index} style={{ marginBottom: '16px' }}>
             <Space direction="vertical" style={{ width: '100%' }}>
+              {/* Field Name */}
               <Controller
                 name={`${currentName}.name`}
                 control={control}
@@ -33,10 +34,11 @@ function Field({ name, control, register, watch, setValue }) {
                 )}
               />
 
+              {/* Field Type */}
               <Controller
                 name={`${currentName}.type`}
                 control={control}
-                defaultValue={field.type || 'string'}
+                defaultValue={field.type ?? ''}
                 render={({ field }) => (
                   <Select
                     value={field.value}
@@ -47,10 +49,11 @@ function Field({ name, control, register, watch, setValue }) {
                         !watch(`${currentName}.fields`)
                       ) {
                         setValue(`${currentName}.fields`, [
-                          { name: '', type: 'string' },
+                          { name: '', type: '' },
                         ]);
                       }
                     }}
+                    placeholder="Select Type"
                     style={{ width: '100%' }}
                   >
                     <Option value="string">String</Option>
@@ -60,6 +63,7 @@ function Field({ name, control, register, watch, setValue }) {
                 )}
               />
 
+              {/* Delete Button */}
               <Button
                 icon={<DeleteOutlined />}
                 danger
@@ -68,6 +72,7 @@ function Field({ name, control, register, watch, setValue }) {
                 Delete Field
               </Button>
 
+              {/* Nested Field */}
               {type === 'nested' && (
                 <div
                   style={{
@@ -91,7 +96,7 @@ function Field({ name, control, register, watch, setValue }) {
 
       <Button
         type="dashed"
-        onClick={() => append({ name: '', type: 'string' })}
+        onClick={() => append({ name: '', type: '' })}
         icon={<PlusOutlined />}
         block
         style={{ marginBottom: '1rem' }}
@@ -106,13 +111,27 @@ function SchemaBuilder() {
   const { register, control, handleSubmit, watch, setValue } = useForm({
     defaultValues: {
       root: {
-        fields: [{ name: '', type: 'string' }],
+        fields: [{ name: '', type: '' }],
       },
     },
   });
 
   const onSubmit = (data) => {
-    console.log('Final JSON Schema:', JSON.stringify(data.root, null, 2));
+    // Optional cleanup: remove fields with missing name/type
+    const cleanFields = (fields) =>
+      fields
+        .filter((f) => f.name && f.type)
+        .map((f) =>
+          f.type === 'nested'
+            ? { ...f, fields: cleanFields(f.fields || []) }
+            : f
+        );
+
+    const cleanData = {
+      fields: cleanFields(data.root.fields),
+    };
+
+    console.log('Final JSON Schema:', JSON.stringify(cleanData, null, 2));
   };
 
   return (
